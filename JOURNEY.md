@@ -20,3 +20,35 @@ A script that processes one perfect file is useless. I had to build a pipeline f
 
 ## The Final Result
 I transformed a manual, 3-hour Windows chore into a lightning-fast C++ engine that crawls deeply nested directories, mathematically deduplicates files, and builds a chronological timeline architecture in milliseconds, all without using a single byte of extra disk space.
+
+
+
+
+
+
+
+
+
+
+
+
+## Technical Hurdles & SDE Micro-Decisions
+
+Building this engine wasn't just about writing logic; it was about navigating C++ idiosyncrasies and Operating System constraints. Here are the specific problems I tackled in the trenches:
+
+### 1. The Build System & Dependency Linking
+* **The Problem:** Modern Python abstracts away compilation, but in C++, I had to manually architect the build pipeline. 
+* **The Solution:** I learned how to use MinGW (`g++`) via the command line to compile and link multiple translation units (`main.cpp`, `TinyEXIF.cpp`) while managing include paths (`-I include`), proving I understand how raw source code becomes a machine-executable `.exe`.
+* **The "Trap":** I spent time debugging "ghost" errors because I was recompiling the `.exe` without hitting `Ctrl + S` on the source file—a classic developer rite of passage that taught me to verify file states before blaming the compiler.
+
+### 2. The DSA Reality Check (`map` vs `unordered_map`)
+* **The Problem:** I initially used `std::map` to map month numbers ("02") to folder names ("02_February"), thinking it was a standard Hash Map. 
+* **The Solution:** I realized that in C++, `std::map` is actually implemented as a Red-Black Tree, which searches in $O(\log n)$ time. I immediately refactored the architecture to use `std::unordered_map` to achieve true $O(1)$ Hash Table lookup time, optimizing the CPU cycles for batch processing.
+
+### 3. Rejecting "Competitive Programming" Habits in Production
+* **The Problem:** It is tempting to use `#include <bits/stdc++.h>` and `using namespace std;` to write code faster.
+* **The Solution:** I explicitly rejected these shortcuts. I manually included only necessary headers (like `<filesystem>` and `<chrono>`) to maintain cross-platform portability and fast compile times. I used explicit `std::` prefixes to completely avoid namespace pollution, adhering to strict enterprise C++ style guides.
+
+### 4. The NTFS "Copy-on-Write" Dilemma
+* **The Problem:** After successfully implementing zero-space OS Hard Links, I realized a critical danger: because hard links share the exact same physical hard drive sectors, opening a sorted photo in MS Paint and hitting "Save" would permanently ruin the original file in my master directory. 
+* **The Solution:** I investigated how the Windows NTFS file system handles this. Because Windows lacks native Copy-on-Write for hard links, I had to architect a workflow around it. I verified that advanced editors (like Photoshop) safely break the link by creating a new temporary file on save, while basic editors trigger a "Save As..." dialog, naturally forcing the user to create a safe, independent copy only when a modification is actually made.
