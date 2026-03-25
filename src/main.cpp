@@ -1,17 +1,15 @@
-#include <filesystem>
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <unordered_map> // UPGRADE 1: True O(1) Hash Map
+#include <filesystem>
 #include "TinyEXIF.h" 
-#include <map> //for HashMap
 
 namespace fs = std::filesystem;
 
-
-// --- HELPER FUNCTION: Maps "02" to "02_February" ---
+// --- HELPER FUNCTION: O(1) Hash Map ---
 std::string getMonthName(const std::string& monthNum) {
-    // We use a static map so it's only created once in memory, not every time a photo is processed.
-    static const std::map<std::string, std::string> monthMap = {
+    static const std::unordered_map<std::string, std::string> monthMap = {
         {"01", "01_January"}, {"02", "02_February"}, {"03", "03_March"},
         {"04", "04_April"},   {"05", "05_May"},      {"06", "06_June"},
         {"07", "07_July"},    {"08", "08_August"},   {"09", "09_September"},
@@ -22,83 +20,78 @@ std::string getMonthName(const std::string& monthNum) {
     if (it != monthMap.end()) {
         return it->second;
     }
-    return "Unknown_Month"; // Fallback for corrupted data
+    return "Unknown_Month"; 
 }
 
-
-
 int main() {
-    // 1. Point to our safe test sandbox
-    std::string imagePath = "D:\\Project_MetaSort\\test_data\\test_photo.jpg"; 
+    // Point to the entire FOLDER now, not a single file.
+    std::string sourceDir = "D:\\Project_MetaSort\\test_data"; 
+    std::string outputDirBase = "D:\\Project_MetaSort\\Sorted_Output";
 
-    std::cout << "--- MetaSort EXIF Extractor Starting ---\n";
-    std::cout << "Target File: " << imagePath << "\n\n";
+    std::cout << "--- MetaSort Batch Engine Starting ---\n";
+    std::cout << "Scanning Directory: " << sourceDir << "\n\n";
 
-    // 2. Open the file in raw BINARY mode
-    std::ifstream file(imagePath, std::ios::binary);
-    
-    if (!file.is_open()) {
-        std::cerr << "[CRITICAL ERROR] Could not open file. Check the path!\n";
-        return 1;
-    }
-
-
-    
-
-    // 3. Pass the raw bytes to our EXIF engine
-    TinyEXIF::EXIFInfo imageEXIF(file);
-
-
-
-
-    // 4. Verify extraction and Process Data
-    if (imageEXIF.Fields) {
-        std::string rawDate = imageEXIF.DateTimeOriginal;
+    // UPGRADE 3: The Recursive Directory Crawler
+    for (const auto& entry : fs::recursive_directory_iterator(sourceDir)) {
         
-        std::cout << "[SUCCESS] EXIF Extracted: " << rawDate << "\n";
+        // Skip folders, we only want to read actual files
+        if (!entry.is_regular_file()) continue;
+
+        std::string imagePath = entry.path().string();
+        std::string ext = entry.path().extension().string();
         
-        // --- THE SDE SLICE ---
-        // Ensure the string is long enough to prevent out_of_range crashes
-        if (rawDate.length() >= 7) { 
-            std::string year = rawDate.substr(0, 4);   
-            std::string month = rawDate.substr(5, 2);  
+        // Security Check: Only process JPEGs
+        if (ext != ".jpg" && ext != ".jpeg" && ext != ".JPG" && ext != ".JPEG") {
+            continue; 
+        }
+
+        std::cout << "Processing: " << entry.path().filename().string() << "\n";
+
+        std::ifstream file(imagePath, std::ios::binary);
+        if (!file.is_open()) {
+            std::cerr << "  [ERROR] Could not read file.\n";
+            continue; // Skip to the next photo in the loop
+        }
+
+        TinyEXIF::EXIFInfo imageEXIF(file);
+
+        // Ensure the EXIF data exists AND the date string is the full 19 characters (YYYY:MM:DD HH:MM:SS)
+        if (imageEXIF.Fields && imageEXIF.DateTimeOriginal.length() >= 19) {
+            std::string rawDate = imageEXIF.DateTimeOriginal; 
+            
+            // UPGRADE 2: DYNAMIC NAMING SLICES
+            std::string year   = rawDate.substr(0, 4);   
+            std::string month  = rawDate.substr(5, 2);
+            std::string day    = rawDate.substr(8, 2);
+            std::string hour   = rawDate.substr(11, 2);
+            std::string minute = rawDate.substr(14, 2);
+            std::string second = rawDate.substr(17, 2);
             
             std::string folderName = getMonthName(month);
+            std::string targetDir = outputDirBase + "\\" + year + "\\" + folderName;
             
-            // 1. Build the target directory path
-            std::string targetDir = "D:\\Project_MetaSort\\Sorted_Output\\" + year + "\\" + folderName;
-            
-            // 2. Build the final file path (Directory + Filename)
-            // For now, we hardcode the output name. ***We will make this dynamic later.***
-            std::string targetFile = targetDir + "\\test_photo_sorted.jpg";
-
-            std::cout << "Routing to : " << targetFile << "\n";
+            // Construct the dynamic filename: YYYY-MM-DD_HH-MM-SS.jpg
+            std::string newFileName = year + "-" + month + "-" + day + "_" + hour + "-" + minute + "-" + second + ext;
+            std::string targetFile = targetDir + "\\" + newFileName;
 
             try {
-                // 3. Command the OS to create the nested folders (if they don't exist)
                 fs::create_directories(targetDir);
 
-                // 4. Command the OS to create the zero-space Hard Link
-                // Check if it already exists to prevent crash on re-run
                 if (!fs::exists(targetFile)) {
                     fs::create_hard_link(imagePath, targetFile);
-                    std::cout << "[SUCCESS] Hard Link created! Zero space consumed.\n";
+                    std::cout << "  [SUCCESS] Routed to -> " << newFileName << "\n";
                 } else {
-                    std::cout << "[SKIP] File already exists at destination.\n";
+                    std::cout << "  [SKIP] File already exists at destination.\n";
                 }
             } 
             catch (const fs::filesystem_error& e) {
-                std::cerr << "[CRITICAL OS ERROR] " << e.what() << "\n";
+                std::cerr << "  [OS ERROR] " << e.what() << "\n";
             }
-
         } else {
-            std::cerr << "[WARNING] Date format is corrupted: " << rawDate << "\n";
+            std::cerr << "  [WARNING] No valid EXIF date found. Skipping.\n";
         }
-
-        std::cout << "----------------------------------\n";
-    } else {
-        std::cerr << "[FAILED] No EXIF data found. Is it a stripped image?\n";
     }
 
+    std::cout << "\n--- Batch Processing Complete ---\n";
     return 0;
 }
