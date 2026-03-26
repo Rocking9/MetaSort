@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Project MetaSort 🚀
 
 A high-performance, local, C++ based media ingest and curation engine. MetaSort automatically traverses messy directories, extracts hidden EXIF metadata, deduplicates files using cryptographic hashing, and routes them into chronological physical folders using zero-space OS Hard Links.
@@ -22,7 +21,7 @@ A high-performance, local, C++ based media ingest and curation engine. MetaSort 
 * [ ] OS-Level Hard Link Routing
 * [ ] Local HTML/CSS GUI (via Webview)
 
-=======
+
 # Project MetaSort 🚀
 
 A high-performance, local, C++ based media ingest and curation engine. MetaSort automatically traverses messy directories, extracts hidden EXIF metadata, deduplicates files using cryptographic hashing, and routes them into chronological physical folders using zero-space OS Hard Links.
@@ -46,4 +45,3 @@ A high-performance, local, C++ based media ingest and curation engine. MetaSort 
 * [ ] OS-Level Hard Link Routing
 * [ ] Local HTML/CSS GUI (via Webview)
 
->>>>>>> 75b7a33ed6e1511407ed92dc7e22f86eeb96c55a

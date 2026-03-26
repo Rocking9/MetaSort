@@ -37,16 +37,18 @@ std::string getFileSignature(const std::string& filepath) {
 
 // --- PHASE 1: CLI ARGUMENTS ---
 int main(int argc, char* argv[]) {
-    // 1. Validate terminal inputs
-    if (argc != 3) {
+    // 1. Validate terminal inputs (Now Expecting 4 Arguments)
+    if (argc != 4) {
         std::cerr << "\n[ERROR] Invalid Arguments!\n";
-        std::cerr << "Usage:   metasort <Source_Directory> <Output_Directory>\n";
-        std::cerr << "Example: metasort \"D:\\Project_MetaSort\\test_data\" \"D:\\Project_MetaSort\\Sorted_Output\"\n\n";
+        std::cerr << "Usage:   metasort <Source_Dir> <Output_Dir> <Mode>\n";
+        std::cerr << "Modes:   --hardlink OR --copy\n";
+        std::cerr << "Example: metasort \"C:\\Messy\" \"D:\\Clean\" --hardlink\n\n";
         return 1; 
     }
 
     std::string sourceDir = argv[1]; 
     std::string outputDirBase = argv[2];
+    std::string mode = argv[3]; // Captures the UI button choice
 
     if (!fs::exists(sourceDir) || !fs::is_directory(sourceDir)) {
         std::cerr << "\n[CRITICAL ERROR] Source folder does not exist: " << sourceDir << "\n";
@@ -118,13 +120,19 @@ int main(int argc, char* argv[]) {
                 fs::create_directories(targetDir);
 
                 if (!fs::exists(targetFile)) {
-                    // THE MAIN OBJECTIVE: Hard Link
-                    fs::create_hard_link(imagePath, targetFile);
-
-                    // THE SAFETY LOCK: Strip write permissions to force "Save As..." behavior
-                    fs::permissions(targetFile, fs::perms::owner_write | fs::perms::group_write | fs::perms::others_write, fs::perm_options::remove);
-
-                    std::cout << "  [SUCCESS] " << originType << " Hard Linked & Locked -> " << newFileName << "\n";
+                    // THE MODE ROUTER
+                    if (mode == "--hardlink") {
+                        fs::create_hard_link(imagePath, targetFile);
+                        fs::permissions(targetFile, fs::perms::owner_write | fs::perms::group_write | fs::perms::others_write, fs::perm_options::remove);
+                        std::cout << "  [SUCCESS] " << originType << " Hard Linked & Locked -> " << newFileName << "\n";
+                    } 
+                    else if (mode == "--copy") {
+                        fs::copy(imagePath, targetFile, fs::copy_options::skip_existing);
+                        std::cout << "  [SUCCESS] " << originType << " Copied -> " << newFileName << "\n";
+                    } 
+                    else {
+                        std::cerr << "  [ERROR] Unknown mode passed to engine: " << mode << "\n";
+                    }
                 } else {
                     std::cout << "  [SKIP] Filename already exists at destination.\n";
                 }

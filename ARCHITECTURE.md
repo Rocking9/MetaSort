@@ -66,3 +66,18 @@ This document tracks the "Why This, Not That" engineering decisions made during 
 * **Why:** Social media apps strip EXIF data for privacy. The engine must be robust enough to handle broken DNA without leaving files in an "Unsorted" dump folder.
 * **Pros:** Guarantees 100% file routing. Maintains general timeline integrity based on when the user received or downloaded the file.
 * **Cons:** Accuracy drift. The OS timestamp represents the file's entry onto the hard drive, not the exact millisecond the camera shutter fired.
+
+
+
+
+
+
+## Future Roadmap & Feature Expansion
+
+### 1. Hardware-Specific Sub-Routing
+* **The Concept:** Utilize the `Make` and `Model` EXIF tags to create sub-directories within the chronological timeline (e.g., `2026 \ 02_February \ Sony_A7IV`).
+* **The Value:** Allows professional photographers to instantly separate DSLR RAW files from casual smartphone snapshots.
+
+### 2. "Gallery View" Desktop GUI
+* **The Concept:** Move beyond a simple execution UI and build a React/Electron desktop application that acts as a visual gallery.
+* **The Value:** Users can visually browse their newly sorted `Sorted_Output` folder with a modern, responsive UI directly inside the app, complete with the SDE warnings about Read-Only modification limits.
