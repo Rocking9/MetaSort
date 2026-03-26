@@ -2,9 +2,9 @@
 #include <string>
 #include <fstream>
 #include <unordered_map>
-#include <unordered_set> // FOR O(1) DEDUPLICATION
+#include <unordered_set> 
 #include <filesystem>
-#include <chrono>        // FOR OS TIMESTAMP FALLBACK
+#include <chrono>        
 #include <iomanip>
 #include "TinyEXIF.h" 
 
@@ -25,26 +25,39 @@ std::string getMonthName(const std::string& monthNum) {
 // --- HELPER 2: File Signature Generator ---
 std::string getFileSignature(const std::string& filepath) {
     std::ifstream f(filepath, std::ios::binary);
-    char buffer[4096] = {0}; // Read first 4KB
+    char buffer[4096] = {0}; 
     f.read(buffer, sizeof(buffer));
     std::string data(buffer, f.gcount());
     
-    // Signature = Hash(First 4KB) + File Size
     size_t dataHash = std::hash<std::string>{}(data);
     uintmax_t fileSize = fs::file_size(filepath);
     
     return std::to_string(dataHash) + "_" + std::to_string(fileSize);
 }
 
-int main() {
-    std::string sourceDir = "D:\\Project_MetaSort\\test_data"; 
-    std::string outputDirBase = "D:\\Project_MetaSort\\Sorted_Output";
+// --- PHASE 1: CLI ARGUMENTS ---
+int main(int argc, char* argv[]) {
+    // 1. Validate terminal inputs
+    if (argc != 3) {
+        std::cerr << "\n[ERROR] Invalid Arguments!\n";
+        std::cerr << "Usage:   metasort <Source_Directory> <Output_Directory>\n";
+        std::cerr << "Example: metasort \"D:\\Project_MetaSort\\test_data\" \"D:\\Project_MetaSort\\Sorted_Output\"\n\n";
+        return 1; 
+    }
 
-    // THE GATEKEEPER: An O(1) Hash Set to memorize every photo we process
+    std::string sourceDir = argv[1]; 
+    std::string outputDirBase = argv[2];
+
+    if (!fs::exists(sourceDir) || !fs::is_directory(sourceDir)) {
+        std::cerr << "\n[CRITICAL ERROR] Source folder does not exist: " << sourceDir << "\n";
+        return 1;
+    }
+
     std::unordered_set<std::string> processedSignatures;
 
-    std::cout << "--- MetaSort V2 (Deduplication & Fallback Active) ---\n";
-    std::cout << "Scanning Directory: " << sourceDir << "\n\n";
+    std::cout << "--- MetaSort V3 (Zero-Space Hard Links & CLI) ---\n";
+    std::cout << "Scanning Directory: " << sourceDir << "\n";
+    std::cout << "Targeting Output:   " << outputDirBase << "\n\n";
 
     for (const auto& entry : fs::recursive_directory_iterator(sourceDir)) {
         if (!entry.is_regular_file()) continue;
@@ -56,41 +69,37 @@ int main() {
 
         std::cout << "Processing: " << entry.path().filename().string() << "\n";
 
-        // --- PHASE 1: DEDUPLICATION ---
+        // --- DEDUPLICATION ---
         std::string fileSig = getFileSignature(imagePath);
         if (processedSignatures.find(fileSig) != processedSignatures.end()) {
             std::cout << "  [SKIPPED] Exact duplicate detected. Conserving CPU.\n";
-            continue; // Move to the next photo instantly
+            continue; 
         }
-        processedSignatures.insert(fileSig); // Memorize this file signature
+        processedSignatures.insert(fileSig); 
 
-        // --- PHASE 2: METADATA EXTRACTION FUNNEL ---
+        // --- METADATA FUNNEL ---
         std::string rawDate = "";
-        std::string originType = ""; // Just to print where we got the date from
+        std::string originType = ""; 
 
         std::ifstream file(imagePath, std::ios::binary);
         TinyEXIF::EXIFInfo imageEXIF(file);
 
         if (imageEXIF.Fields && imageEXIF.DateTimeOriginal.length() >= 19) {
-            // Path A: The standard EXIF route
             rawDate = imageEXIF.DateTimeOriginal; 
             originType = "EXIF";
         } else {
-            // Path B: The WhatsApp Fallback (Ask the OS Kernel)
             auto ftime = fs::last_write_time(entry);
-            // C++17 Chrono hack to convert OS File Time to Calendar Time
             auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(ftime - fs::file_time_type::clock::now() + std::chrono::system_clock::now());
             std::time_t cftime = std::chrono::system_clock::to_time_t(sctp);
             std::tm* tm_info = std::localtime(&cftime);
             
-            // Format it to match the EXIF standard perfectly (YYYY:MM:DD HH:MM:SS)
             char buffer[20];
             std::strftime(buffer, 20, "%Y:%m:%d %H:%M:%S", tm_info);
             rawDate = std::string(buffer);
             originType = "OS Fallback";
         }
 
-        // --- PHASE 3: THE ROUTER (Both paths end up here) ---
+        // --- THE ROUTER ---
         if (rawDate.length() >= 19) {
             std::string year   = rawDate.substr(0, 4);   
             std::string month  = rawDate.substr(5, 2);
@@ -109,8 +118,13 @@ int main() {
                 fs::create_directories(targetDir);
 
                 if (!fs::exists(targetFile)) {
+                    // THE MAIN OBJECTIVE: Hard Link
                     fs::create_hard_link(imagePath, targetFile);
-                    std::cout << "  [SUCCESS] " << originType << " Routed -> " << newFileName << "\n";
+
+                    // THE SAFETY LOCK: Strip write permissions to force "Save As..." behavior
+                    fs::permissions(targetFile, fs::perms::owner_write | fs::perms::group_write | fs::perms::others_write, fs::perm_options::remove);
+
+                    std::cout << "  [SUCCESS] " << originType << " Hard Linked & Locked -> " << newFileName << "\n";
                 } else {
                     std::cout << "  [SKIP] Filename already exists at destination.\n";
                 }
