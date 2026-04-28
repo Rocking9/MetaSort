@@ -106,8 +106,8 @@
 
         /* 5. Warning & Terminal Output */
         .warning { 
-            background: rgba(255, 204, 0, 0.15); 
-            border-left: 4px solid #ffcc00;
+            background: rgba(255, 208, 208, 0.15); 
+            border-left: 4px solid #a8a599;
             color: #fff; 
             padding: 12px; 
             margin-top: 20px;
@@ -147,7 +147,13 @@
     </select>
 
     <div id="warning-box" class="warning">
-        ⚠️ <b>Architectural Note:</b> To conserve disk space, MetaSort utilizes physical hard links. The sorted files are locked by the OS in Read-Only mode. To edit a photo, you must use <b>Save As...</b>
+        
+        <svg width="10" height="12" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M10.9994 2.17806C11.6185 1.82037 12.3815 1.82037 13.0006 2.17806L20.0006 6.2225C20.619 6.57985 21 7.23993 21 7.95423V16.0457C21 16.76 20.619 17.4201 20.0006 17.7774L13.0006 21.8219C12.3815 22.1796 11.6185 22.1796 10.9994 21.8219L3.99944 17.7774C3.38095 17.4201 3 16.76 3 16.0457V7.95423C3 7.23993 3.38096 6.57985 3.99944 6.2225L10.9994 2.17806ZM18.7512 7.23305L12 11.1338L5.24875 7.23305L11.7499 3.47686C11.9046 3.38743 12.0954 3.38743 12.2501 3.47686L18.7512 7.23305ZM4.74986 16.4786C4.59524 16.3893 4.5 16.2243 4.5 16.0457V8.53281L11.25 12.4328V20.2343L4.74986 16.4786ZM19.2501 16.4786L12.75 20.2343V12.4328L19.5 8.53281V16.0457C19.5 16.2243 19.4048 16.3893 19.2501 16.4786Z" fill="black"/>
+        </svg>
+
+        
+        <b>Architectural Note:</b> To conserve disk space, MetaSort utilizes physical hard links. The sorted files are locked by the OS in Read-Only mode. To edit a photo, you must use <b>Save As...</b>
     </div>
 
     <button onclick="runEngine()">INITIALIZE ENGINE</button>

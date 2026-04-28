@@ -10,10 +10,16 @@ app.use(express.json());
 app.post('/run', (req, res) => {
     const { source, output, mode } = req.body;
 
-    // Point to your compiled C++ executable
-    const exePath = path.resolve(__dirname, '../bin/metasort.exe');
+    // --- THE SDE PATH FIX ---
+    // Check if the app is packaged inside the Electron .asar archive
+    const isPackaged = __dirname.includes('app.asar');
+    
+    // Dynamically route the path based on the environment
+    const exePath = isPackaged 
+        ? path.join(__dirname, '..', '..', 'engine', 'metasort.exe') // Production Path
+        : path.join(__dirname, 'engine', 'metasort.exe');            // Development Path
 
-    console.log(`Executing: metasort.exe "${source}" "${output}" ${mode}`);
+    console.log(`Executing: ${exePath} "${source}" "${output}" ${mode}`);
 
     // Fire the executable with the UI arguments
     execFile(exePath, [source, output, mode], (error, stdout, stderr) => {

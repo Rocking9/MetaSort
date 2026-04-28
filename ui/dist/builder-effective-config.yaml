@@ -1,0 +1,11 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.metasort.app
+win:
+  target: portable
+extraFiles:
+  - filter:
+      - engine/metasort.exe
+files: []
+electronVersion: 41.0.4
