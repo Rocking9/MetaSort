@@ -7,12 +7,16 @@
     <style>
         /* 1. The Desktop Background (Vibrant enough to show off the glass) */
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: 'Sora', 'Montserrat', sans-serif;
+            letter-spacing: 1px;
+            font-weight: 700;
+            /*font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;*/
+            
             margin: 0; 
             padding: 40px; 
             min-height: 100vh;
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); /* Deep Win7-esque teal */
-            color: #ffffff; 
+            background: linear-gradient(135deg, #120e17, #433541, #251439); /* Deep Win7-esque teal */
+            color: #975151; 
             display: flex;
             justify-content: center;
             align-items: center;
@@ -26,17 +30,17 @@
             border-radius: 12px; 
             
             /* The Frosted Glass Illusion */
-            background: rgba(255, 255, 255, 0.05); 
+            background: rgba(255, 255, 255, 0.04); 
             backdrop-filter: blur(16px); 
             -webkit-backdrop-filter: blur(16px);
             
             /* The subtle light border that defines Win7 */
-            border: 1px solid rgba(255, 255, 255, 0.15); 
-            border-top: 1px solid rgba(255, 255, 255, 0.3);
-            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            border: 0.5px solid rgba(255, 255, 255, 0.15); 
+            border-top: 0.5px solid rgba(255, 255, 255, 0.3);
+            border-left: 0.5px solid rgba(255, 255, 255, 0.3);
             
             /* The drop shadow for physical depth */
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4); 
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); 
         }
 
         h2 {
@@ -124,9 +128,31 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
             overflow-x: auto; 
             font-size: 0.8em;
-            color: #00ffcc; /* Hacker terminal green/cyan */
+            color: #aacac3; /* Hacker terminal green/cyan */
             box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
         }
+        
+        /* Flexbox for the Input + Browse Button */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .input-group input {
+            margin-top: 0; /* Reset margin since flexbox handles it */
+            flex-grow: 1;  /* Makes input take up remaining space */
+        }
+
+        .browse-btn {
+            width: auto;
+            margin: 0;
+            padding: 0 15px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 1.2em;
+        }
+
     </style>
 </head>
 <body>
@@ -135,10 +161,26 @@
     <h2>MetaSort</h2>
     
     <label>Source Directory (Messy Photos)</label>
-    <input type="text" id="source" placeholder="e.g. D:\Project_MetaSort\test_data">
+    <div class="input-group">
+        <input type="text" id="source" placeholder="e.g. D:\Project_MetaSort\test_data">
+        <button class="browse-btn" onclick="selectFolder('source')" title="Browse Folders"> 
+            <svg width="24" height="25" viewBox="0 -2 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11.25 15.75C11.25 16.1642 11.5857 16.5 12 16.5C12.4142 16.5 12.75 16.1642 12.75 15.75V13.75H14.75C15.1642 13.75 15.5 13.4142 15.5 13C15.5 12.5858 15.1642 12.25 14.75 12.25H12.75V10.25C12.75 9.83579 12.4142 9.5 12 9.5C11.5857 9.5 11.25 9.83579 11.25 10.25V12.25H9.24996C8.83574 12.25 8.49996 12.5858 8.49996 13C8.49996 13.4142 8.83574 13.75 9.24996 13.75H11.25V15.75Z" fill="black"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M10.5857 4.58579L12 6H20C21.1045 6 22 6.89543 22 8V18C22 19.1046 21.1045 20 20 20H3.99995C2.89539 20 1.99995 19.1046 1.99995 18V6C1.99995 4.89543 2.89538 4 3.99995 4H9.17153C9.70196 4 10.2107 4.21071 10.5857 4.58579ZM12 7.5C11.6021 7.5 11.2206 7.34196 10.9393 7.06066L9.52508 5.64645C9.43131 5.55268 9.30414 5.5 9.17153 5.5H3.99995C3.72381 5.5 3.49995 5.72386 3.49995 6V18C3.49995 18.2761 3.72381 18.5 3.99995 18.5H20C20.2761 18.5 20.5 18.2761 20.5 18V8C20.5 7.72386 20.2761 7.5 20 7.5H12Z" fill="black"/>
+            </svg>
+        </button>
+    </div>
 
     <label>Output Directory (Clean Archive)</label>
-    <input type="text" id="output" placeholder="e.g. D:\Project_MetaSort\Sorted_Output">
+    <div class="input-group">
+        <input type="text" id="output" placeholder="e.g. D:\Project_MetaSort\Sorted_Output">
+        <button class="browse-btn" onclick="selectFolder('output')" title="Browse Folders">
+            <svg width="24" height="25" viewBox="0 -2 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11.25 15.75C11.25 16.1642 11.5857 16.5 12 16.5C12.4142 16.5 12.75 16.1642 12.75 15.75V13.75H14.75C15.1642 13.75 15.5 13.4142 15.5 13C15.5 12.5858 15.1642 12.25 14.75 12.25H12.75V10.25C12.75 9.83579 12.4142 9.5 12 9.5C11.5857 9.5 11.25 9.83579 11.25 10.25V12.25H9.24996C8.83574 12.25 8.49996 12.5858 8.49996 13C8.49996 13.4142 8.83574 13.75 9.24996 13.75H11.25V15.75Z" fill="black"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M10.5857 4.58579L12 6H20C21.1045 6 22 6.89543 22 8V18C22 19.1046 21.1045 20 20 20H3.99995C2.89539 20 1.99995 19.1046 1.99995 18V6C1.99995 4.89543 2.89538 4 3.99995 4H9.17153C9.70196 4 10.2107 4.21071 10.5857 4.58579ZM12 7.5C11.6021 7.5 11.2206 7.34196 10.9393 7.06066L9.52508 5.64645C9.43131 5.55268 9.30414 5.5 9.17153 5.5H3.99995C3.72381 5.5 3.49995 5.72386 3.49995 6V18C3.49995 18.2761 3.72381 18.5 3.99995 18.5H20C20.2761 18.5 20.5 18.2761 20.5 18V8C20.5 7.72386 20.2761 7.5 20 7.5H12Z" fill="black"/>
+            </svg>
+        </button>
+    </div>
 
     <label>Storage Architecture</label>
     <select id="mode" onchange="toggleWarning()">
@@ -162,6 +204,19 @@
 </div>
 
 <script>
+
+    // Require Electron's IPC bridge to talk to main.js
+    const { ipcRenderer } = require('electron');
+
+    // Ask the main process to open the OS folder dialog
+    async function selectFolder(inputId) {
+        const folderPath = await ipcRenderer.invoke('dialog:openDirectory');
+        if (folderPath) {
+            // Update the UI text box with the chosen path
+            document.getElementById(inputId).value = folderPath;
+        }
+    }
+
     // Keep the exact same logic we just built!
     function toggleWarning() {
         const mode = document.getElementById("mode").value;
